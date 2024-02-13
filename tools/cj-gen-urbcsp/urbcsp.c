@@ -1,10 +1,11 @@
 /* urbcsp.c -- generates uniform random binary constraint satisfaction problems
 */
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdint.h>
 
 /* function declarations */
-float ran2(long *idum);
+float ran2(int32_t *idum);
 void StartCSP(int N, int K, int instance);
 void EndCSP();
 void AddConstraint(int var1, int var2);
@@ -33,7 +34,7 @@ void AddNogood(int val1, int val2);
 int main(int argc, char* argv[])
 {
   int N, D, C, T, I, i;
-  long S;
+  int32_t S;
 
   if (argc != 7)
     {
@@ -83,11 +84,11 @@ int main(int argc, char* argv[])
       Returns 0 if there is a problem; 1 for normal completion.
 *********************************************************************/
 
-int MakeURBCSP(int N, int D, int C, int T, long *Seed)
+int MakeURBCSP(int N, int D, int C, int T, int32_t *Seed)
 {
   int PossibleCTs, PossibleNGs;       /* CT means "constraint" */
-  unsigned long *CTarray, *NGarray;   /* NG means "nogood pair" */
-  long selectedCT, selectedNG;
+  uint32_t *CTarray, *NGarray;   /* NG means "nogood pair" */
+  int32_t selectedCT, selectedNG;
   int i, c, r, t;
   int var1, var2, val1, val2;
   static int instance;
@@ -135,11 +136,11 @@ int MakeURBCSP(int N, int D, int C, int T, long *Seed)
 
   /* Create an array for each possible binary constraint. */
   PossibleCTs = N * (N - 1) / 2;
-  CTarray = (unsigned long*) malloc(PossibleCTs * 4);
+  CTarray = (uint32_t*) malloc(PossibleCTs * 4);
 
   /* Create an array for each possible value pair. */
   PossibleNGs = D * D;
-  NGarray = (unsigned long*) malloc(PossibleNGs * 4);
+  NGarray = (uint32_t*) malloc(PossibleNGs * 4);
 
   /* Initialize the CTarray.  Each entry has one var in the high two
      bytes, and the other in the low two bytes. */
@@ -219,13 +220,13 @@ int MakeURBCSP(int N, int D, int C, int T, long *Seed)
    idum is made positive so that subsequent calls using an unchanged
    idum will continue in the same sequence). */
 
-float ran2(long *idum)
+float ran2(int32_t *idum)
 {
   int j;
-  long k;
-  static long idum2 = 123456789;
-  static long iy = 0;
-  static long iv[NTAB];
+  int32_t k;
+  static int32_t idum2 = 123456789;
+  static int32_t iy = 0;
+  static int32_t iv[NTAB];
   float temp;
 
   if (*idum <= 0) {                             /* initialize */
