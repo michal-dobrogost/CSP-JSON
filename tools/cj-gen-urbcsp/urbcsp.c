@@ -9,11 +9,11 @@
 
 /* function declarations */
 float ran2(int32_t *idum);
-CjError StartCSP(int N, int D, int C, int T, int32_t S, int Instance, CjCsp* csp);
+CjError StartCSP(int N, int D, int K, int C, int T, int32_t S, int Instance, CjCsp* csp);
 CjError EndCSP(CjCsp* csp);
 CjError AddConstraint(int var1, int var2, CjConstraint* constraint);
 CjError AddNogood(int tupleIdx, int val1, int val2, CjConstraintDef* constraintDef);
-int MakeURBCSP(int N, int D, int C, int T, int32_t S, int32_t *Seed);
+int MakeURBCSP(int N, int D, int K, int C, int T, int32_t S, int32_t *Seed);
 
 /*********************************************************************
   This file has 5 parts:
@@ -37,15 +37,18 @@ int MakeURBCSP(int N, int D, int C, int T, int32_t S, int32_t *Seed);
 
 int main(int argc, char* argv[])
 {
-  int N, D, C, T, I, i;
+  int N, D, K, C, T, I, i;
   int32_t S, Seed;
 
-  if (argc != 7)
-    {
-      printf("usage: urbcsp #vars #vals #constraints #nogoods seed "
-             "instances\n");
-      return 1;
-    }
+  if (argc != 7 && argc != 8) {
+    fprintf(
+      stderr,
+      "Usage: cj-gen-urbcsp #vars #vals #constraints #nogoods seed #instances [#constraintDefs]\n"
+      "\n"
+      "  If #constraintDefs is missing it is set to equal #constraints which matches the\n"
+      "  behaviour of the original urbcsp which didn't allow this argument.\n");
+    return 1;
+  }
 
   N = atoi(argv[1]);
   D = atoi(argv[2]);
@@ -54,14 +57,22 @@ int main(int argc, char* argv[])
   S = atoi(argv[5]);
   I = atoi(argv[6]);
 
+  K = C;
+  if (argc == 8) {
+    K = atoi(argv[7]);
+  }
+
   /* Seed passed to ran2() must initially be negative. */
   Seed = S;
-  if (Seed > 0)
+  if (Seed > 0) {
     Seed = -Seed;
+  }
 
-  for (i=0; i<I; ++i)
-    if (!MakeURBCSP(N, D, C, T, S, &Seed))
+  for (i=0; i<I; ++i) {
+    if (!MakeURBCSP(N, D, K, C, T, S, &Seed)) {
       return 2;
+    }
+  }
 
   return 0;
 }
@@ -80,6 +91,7 @@ int main(int argc, char* argv[])
   INPUT PARAMETERS:
    N: number of variables
    D: size of each variable's domain
+   K: number of constraint definitions
    C: number of constraints
    T: number of incompatible value pairs in each constraint
    S: the original seed specified on the command line
@@ -90,7 +102,7 @@ int main(int argc, char* argv[])
       Returns 0 if there is a problem; 1 for normal completion.
 *********************************************************************/
 
-int MakeURBCSP(int N, int D, int C, int T, int32_t S, int32_t *Seed)
+int MakeURBCSP(int N, int D, int K, int C, int T, int32_t S, int32_t *Seed)
 {
   int PossibleCTs, PossibleNGs;       /* CT means "constraint" */
   uint32_t *CTarray, *NGarray;   /* NG means "nogood pair" */
@@ -113,9 +125,19 @@ int MakeURBCSP(int N, int D, int C, int T, int32_t S, int32_t *Seed)
       fprintf(stderr, "MakeURBCSP: ***Illegal value for D: %d (D >= 2)\n", D);
       return 0;
     }
-  if (C < 0)
+  if (K < 1)
     {
-      fprintf(stderr, "MakeURBCSP: ***Illegal value for C: %d (C >= 0)\n", C);
+      fprintf(stderr, "MakeURBCSP: ***Illegal value for K: %d (C >= 1)\n", K);
+      return 0;
+    }
+  if (K > C)
+    {
+      fprintf(stderr, "MakeURBCSP: ***Illegal value for K: %d (K <= C)\n", K);
+      return 0;
+    }
+  if (C < 1)
+    {
+      fprintf(stderr, "MakeURBCSP: ***Illegal value for C: %d (C >= 1)\n", C);
       return 0;
     }
   if (C > PossibleCTs)
@@ -140,7 +162,7 @@ int MakeURBCSP(int N, int D, int C, int T, int32_t S, int32_t *Seed)
     ++instance;       /* increment static variable */
 
   CjCsp csp = cjCspInit();
-  CjError err = StartCSP(N, D, C, T, S, instance, &csp);
+  CjError err = StartCSP(N, D, K, C, T, S, instance, &csp);
   if (err != CJ_ERROR_OK) { return 0; }
 
   /* The program has to choose randomly and uniformly m values from
@@ -199,7 +221,7 @@ int MakeURBCSP(int N, int D, int C, int T, int32_t S, int32_t *Seed)
           NGarray[t] = selectedNG;
 
           /* Broadcast the nogood value pair. */
-          err = AddNogood(t, (int)(NGarray[t] / D), (int)(NGarray[t] % D), &csp.constraintDefs[c]);
+          err = AddNogood(t, (int)(NGarray[t] / D), (int)(NGarray[t] % D), &csp.constraintDefs[csp.constraints[c].id]);
           if (err != CJ_ERROR_OK) { return 0; }
         }
     }
@@ -295,7 +317,7 @@ float ran2(int32_t *idum)
      which generates a CSP-JSON instance.
 *********************************************************************/
 
-CjError StartCSP(int N, int D, int C, int T, int32_t S, int Instance, CjCsp* csp)
+CjError StartCSP(int N, int D, int K,int C, int T, int32_t S, int Instance, CjCsp* csp)
 {
   if (!csp) { return CJ_ERROR_ARG; }
 
@@ -305,7 +327,7 @@ CjError StartCSP(int N, int D, int C, int T, int32_t S, int Instance, CjCsp* csp
   const size_t strAllocSize = 1024;
   csp->meta.id = malloc(strAllocSize);
   if (!csp->meta.id) { return CJ_ERROR_NOMEM; }
-  int stat = snprintf(csp->meta.id, strAllocSize, "urbcsp/n%dd%dc%dt%ds%di%d", N, D, C, T, S, Instance);
+  int stat = snprintf(csp->meta.id, strAllocSize, "urbcsp/n%dd%dc%dt%ds%di%dk%d", N, D, C, T, S, Instance, K);
   if (stat < 0) { return CJ_ERROR; }
 
   csp->meta.algo = malloc(strAllocSize);
@@ -315,7 +337,7 @@ CjError StartCSP(int N, int D, int C, int T, int32_t S, int Instance, CjCsp* csp
 
   csp->meta.paramsJSON = malloc(strAllocSize);
   if (!csp->meta.paramsJSON) { return CJ_ERROR_NOMEM; }
-  stat = snprintf(csp->meta.paramsJSON, strAllocSize, "{\"n\": %d, \"d\": %d, \"c\": %d, \"t\": %d, \"s\": %d, \"i\": %d}", N, D, C, T, S, Instance);
+  stat = snprintf(csp->meta.paramsJSON, strAllocSize, "{\"n\": %d, \"d\": %d, \"c\": %d, \"t\": %d, \"s\": %d, \"i\": %d, \"k\": %d}", N, D, C, T, S, Instance, K);
   if (stat < 0) { return CJ_ERROR; }
 
   // Make a single domain [0, D-1].
@@ -336,9 +358,9 @@ CjError StartCSP(int N, int D, int C, int T, int32_t S, int Instance, CjCsp* csp
   }
 
   // Allocate and init constraintDefs.
-  csp->constraintDefsSize = C;
-  csp->constraintDefs = (CjConstraintDef*) malloc(C * sizeof(CjConstraintDef));
-  for (int i = 0; i < C; ++i) {
+  csp->constraintDefsSize = K;
+  csp->constraintDefs = (CjConstraintDef*) malloc(K * sizeof(CjConstraintDef));
+  for (int i = 0; i < K; ++i) {
     csp->constraintDefs[i] = cjConstraintDefInit();
     csp->constraintDefs[i].type = CJ_CONSTRAINT_DEF_NO_GOODS;
     const int size = T;
@@ -356,7 +378,7 @@ CjError StartCSP(int N, int D, int C, int T, int32_t S, int Instance, CjCsp* csp
   csp->constraints = (CjConstraint*) malloc(C * sizeof(CjConstraint));
   for (int i = 0; i < C; ++i) {
     csp->constraints[i] = cjConstraintInit();
-    csp->constraints[i].id = i;
+    csp->constraints[i].id = i % K;
   }
 
   return CJ_ERROR_OK;
