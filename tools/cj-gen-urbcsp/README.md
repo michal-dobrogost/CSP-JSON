@@ -3,6 +3,7 @@
 This tool generates binary random CSP instances in the CSP-JSON format. It is based on [Christian Bessiere's urbcsp](https://www.lirmm.fr/~bessiere/generator.html) with these additions:
 * Updated to run on 64-bit machines.
 * Use a dataformat (CSP-JSON) instead of a code dependency.
+* Improved error messages on invalid command line parameters.
 
 Much of this readme originates from the original well.
 

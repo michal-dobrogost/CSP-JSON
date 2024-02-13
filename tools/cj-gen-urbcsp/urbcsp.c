@@ -99,25 +99,38 @@ int MakeURBCSP(int N, int D, int C, int T, int32_t S, int32_t *Seed)
   int var1, var2, val1, val2;
   static int instance;
 
+  PossibleCTs = N * (N - 1) / 2;
+  PossibleNGs = D * D;
+
   /* Check for valid values of N, D, C, and T. */
   if (N < 2)
     {
-      printf("MakeURBCSP: ***Illegal value for N: %d\n", N);
+      fprintf(stderr, "MakeURBCSP: ***Illegal value for N: %d (N >= 2)\n", N);
       return 0;
     }
   if (D < 2)
     {
-      printf("MakeURBCSP: ***Illegal value for D: %d\n", D);
+      fprintf(stderr, "MakeURBCSP: ***Illegal value for D: %d (D >= 2)\n", D);
       return 0;
     }
-  if (C < 0 || C > N * (N - 1) / 2)
+  if (C < 0)
     {
-      printf("MakeURBCSP: ***Illegal value for C: %d\n", C);
+      fprintf(stderr, "MakeURBCSP: ***Illegal value for C: %d (C >= 0)\n", C);
       return 0;
     }
-  if (T < 1 || T > ((D * D) - 1))
+  if (C > PossibleCTs)
     {
-      printf("MakeURBCSP: ***Illegal value for T: %d\n", T);
+      fprintf(stderr, "MakeURBCSP: ***Illegal value for C: %d (C <= N*(N-1)/2 = %d)\n", C, PossibleCTs);
+      return 0;
+    }
+  if (T < 1)
+    {
+      fprintf(stderr, "MakeURBCSP: ***Illegal value for T: %d (T >= 1)\n", T);
+      return 0;
+    }
+  if (T >= PossibleNGs)
+    {
+      fprintf(stderr, "MakeURBCSP: ***Illegal value for T: %d (T < D*D = %d)\n", T, PossibleNGs);
       return 0;
     }
 
@@ -143,11 +156,9 @@ int MakeURBCSP(int N, int D, int C, int T, int32_t S, int32_t *Seed)
    */
 
   /* Create an array for each possible binary constraint. */
-  PossibleCTs = N * (N - 1) / 2;
   CTarray = (uint32_t*) malloc(PossibleCTs * 4);
 
   /* Create an array for each possible value pair. */
-  PossibleNGs = D * D;
   NGarray = (uint32_t*) malloc(PossibleNGs * 4);
 
   /* Initialize the CTarray.  Each entry has one var in the high two
