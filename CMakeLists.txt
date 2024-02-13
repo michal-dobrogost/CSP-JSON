@@ -7,9 +7,10 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 endif()
 
 add_subdirectory(tools/cj-echo)
+add_subdirectory(tools/cj-gen-urbcsp)
 add_subdirectory(tools/cj-validate)
 
-install(TARGETS cj-echo cj-validate DESTINATION .)
+install(TARGETS cj-echo cj-gen-urbcsp cj-validate DESTINATION .)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
   add_subdirectory(test)
