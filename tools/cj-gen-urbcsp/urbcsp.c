@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
     {
       printf("usage: urbcsp #vars #vals #constraints #nogoods seed "
              "instances\n");
-      return 0;
+      return 1;
     }
 
   N = atoi(argv[1]);
@@ -58,9 +58,9 @@ int main(int argc, char* argv[])
 
   for (i=0; i<I; ++i)
     if (!MakeURBCSP(N, D, C, T, &S))
-      return 0;
+      return 2;
 
-  return 1;
+  return 0;
 }
 
 
