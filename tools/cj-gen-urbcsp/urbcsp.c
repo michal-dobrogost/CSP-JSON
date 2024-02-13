@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 /* function declarations */
 float ran2(int32_t *idum);
@@ -10,6 +11,7 @@ void StartCSP(int N, int K, int instance);
 void EndCSP();
 void AddConstraint(int var1, int var2);
 void AddNogood(int val1, int val2);
+int MakeURBCSP(int N, int D, int C, int T, int32_t *Seed);
 
 /*********************************************************************
   This file has 5 parts:
