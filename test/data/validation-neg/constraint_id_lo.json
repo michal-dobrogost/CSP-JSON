@@ -1,0 +1,13 @@
+{
+  "meta": {
+    "id": "test/invalidation/constraint_id_lo.json",
+    "algo": "test",
+    "params": null
+  },
+  "domains": [],
+  "vars": [],
+  "constraintDefs": [],
+  "constraints": [
+    {"id": -1, "vars": []}
+  ]
+}

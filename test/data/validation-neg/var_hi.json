@@ -1,0 +1,13 @@
+{
+  "meta": {
+    "id": "test/invalidation/var_hi.json",
+    "algo": "test",
+    "params": null
+  },
+  "domains": [
+    {"values": []}
+  ],
+  "vars": [1],
+  "constraintDefs": [],
+  "constraints": []
+}

@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "id": "test/key-not-string",
+    "algo": "test",
+    "params": { "1": "ok", 1: "invalid" }
+  },
+  "domains": [],
+  "vars": [],
+  "constraintDefs": [],
+  "constraints": []
+}

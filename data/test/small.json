@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "id": "test/small",
+    "algo": "test",
+    "params": {"vals": 2, "vars": 2}
+  },
+  "domains": [
+    {"values": [0, 1]}
+  ],
+  "vars": [0, 0],
+  "constraintDefs": [
+    {"noGoods": [[0, 0], [1, 1]]}
+  ],
+  "constraints": [
+    {"id": 0, "vars": [0, 1]}
+  ]
+}

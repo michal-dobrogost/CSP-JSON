@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "id": "test/meta-params-object",
+    "algo": "test",
+    "params": {"name": "value"}
+  },
+  "domains": [],
+  "vars": [],
+  "constraintDefs": [],
+  "constraints": []
+}

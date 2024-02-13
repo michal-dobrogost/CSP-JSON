@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "id": "human/0af62ee6-52ed-4483-a625-6d05a5ef2adf",
+    "algo": "human",
+    "params": null
+  },
+  "domains": [
+    {"values": [0, 1, 2]},
+    {"values": [0, 1, 3]}
+  ],
+  "vars": [0, 0, 0],
+  "constraintDefs": [
+    {"noGoods": [[2, 1], [1, 2], [2, 0]]},
+    {"noGoods": [[2, 2], [1, 2], [0, 1]]},
+    {"noGoods": [[1, 1], [2, 2], [0, 0]]}
+  ],
+  "constraints": [
+    {"id": 0, "vars": [0, 1]},
+    {"id": 1, "vars": [0, 2]},
+    {"id": 2, "vars": [1, 2]}
+  ]
+}

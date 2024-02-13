@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "id": "test/meta-params-array",
+    "algo": "test",
+    "params": ["--n", 3]
+  },
+  "domains": [],
+  "vars": [],
+  "constraintDefs": [],
+  "constraints": []
+}
