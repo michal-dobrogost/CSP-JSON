@@ -1,6 +1,6 @@
 with import <nixpkgs> {};
 stdenv.mkDerivation {
   name = "env";
-  nativeBuildInputs = [ cmake ]; # build time
+  nativeBuildInputs = [ cmake tcl ]; # build time
   buildInputs = []; # runtime
 }
