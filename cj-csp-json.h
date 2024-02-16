@@ -631,7 +631,7 @@ typedef struct CjMeta {
 
 /** Zero/null init a CjMeta. */
 CjMeta cjMetaInit();
-void cjMetaFree();
+void cjMetaFree(CjMeta* inout);
 
 ////////////////////////////////////////////////////////////////////////////////
 // CjDomain
@@ -778,6 +778,7 @@ void cjCspFree(CjCsp* inout);
 CjError cjCspValidate(const CjCsp* csp);
 
 #endif // __CJ_CSP_H__
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -873,6 +874,9 @@ void cjDomainFree(CjDomain* inout) {
   switch (inout->type) {
     case CJ_DOMAIN_VALUES:
       cjIntTuplesFree(&inout->values);
+    default:
+      assert(0);
+      break;
   }
   inout->type = CJ_DOMAIN_UNDEF;
 }
@@ -915,6 +919,9 @@ void cjConstraintDefFree(CjConstraintDef* inout) {
   switch (inout->type) {
     case CJ_CONSTRAINT_DEF_NO_GOODS:
       cjIntTuplesFree(&inout->noGoods);
+    default:
+      assert(0);
+      break;
   }
 }
 

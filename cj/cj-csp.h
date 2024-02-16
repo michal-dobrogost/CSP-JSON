@@ -160,7 +160,7 @@ typedef struct CjMeta {
 
 /** Zero/null init a CjMeta. */
 CjMeta cjMetaInit();
-void cjMetaFree();
+void cjMetaFree(CjMeta* inout);
 
 ////////////////////////////////////////////////////////////////////////////////
 // CjDomain
