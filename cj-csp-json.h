@@ -472,6 +472,10 @@ JSMN_API void jsmn_init(jsmn_parser *parser) {
 #ifndef __CJ_CSP_H__
 #define __CJ_CSP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // Errors
 //
@@ -519,9 +523,9 @@ typedef enum CjError {
   /** csp-json.vars[i] int not an int. */
   CJ_ERROR_VAR_IS_NOT_INT = -19,
   /** csp-json.constraintDefs is not an array. */
-  CJ_CONSTRAINTDEFS_IS_NOT_ARRAY = -20,
+  CJ_ERROR_CONSTRAINTDEFS_IS_NOT_ARRAY = -20,
   /** csp-json.constraintDefs[i] is an unknown type (eg. noGoods is known). */
-  CJ_CONSTRAINTDEF_UNKNOWN_TYPE = -21,
+  CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE = -21,
   /** csp-json.constraintDefs[i].noGoods is not an array. */
   CJ_ERROR_NOGOODS_IS_NOT_ARRAY = -22,
   /** csp-json.constraintDefs[i].noGoods[j] is not a tuple. */
@@ -564,7 +568,9 @@ typedef enum CjError {
   CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE = -45,
   CJ_ERROR_VALIDATION_CONSTRAINT_VARS_ARITY = -46,
   CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE = -47,
-  CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE = -48
+  CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE = -48,
+  CJ_ERROR_VALIDATION_SOLUTION_ARITY = -49,
+  CJ_ERROR_VALIDATION_SOLUTION_VARS_SIZE_MISMATCH = -50,
 } CjError;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -777,9 +783,22 @@ void cjCspFree(CjCsp* inout);
  */
 CjError cjCspValidate(const CjCsp* csp);
 
+/**
+ * @return CJ_ERROR_OK if solution solves csp,
+ *         CJ_ERROR_NOT_SOLUTION if solution validates but does not solve csp,
+ *         other error if the solution or csp does not validate.
+ */
+CjError cjCspIsSolved(const CjCsp* csp, const CjIntTuples* solution, int* solved);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif // __CJ_CSP_H__
 #include <assert.h>
 #include <stddef.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 
@@ -1041,16 +1060,91 @@ CjError cjCspValidate(const CjCsp* csp) {
   // Check constraints
   if (csp->constraintsSize < 0) { return CJ_ERROR_VALIDATION_CONSTRAINTS_SIZE; }
   for (int iC = 0; iC < csp->constraintsSize; ++iC) {
-    if (csp->constraints[iC].id < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE; }
-    if (csp->constraints[iC].id >= csp->constraintDefsSize) { return CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE; }
-    if (csp->constraints[iC].vars.arity != -1) { return CJ_ERROR_VALIDATION_CONSTRAINT_VARS_ARITY; }
-    if (csp->constraints[iC].vars.size < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE; }
-    for (int iVar = 0; iVar < csp->constraints[iC].vars.size; ++iVar) {
-      if (csp->constraints[iC].vars.data[iVar] < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE; }
-      if (csp->constraints[iC].vars.data[iVar] >= csp->vars.size) { return CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE; }
+    CjConstraint* c = &csp->constraints[iC];
+    if (c->id < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE; }
+    if (c->id >= csp->constraintDefsSize) { return CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE; }
+    if (c->vars.arity != -1) { return CJ_ERROR_VALIDATION_CONSTRAINT_VARS_ARITY; }
+    if (c->vars.size < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE; }
+    for (int iVar = 0; iVar < c->vars.size; ++iVar) {
+      if (c->vars.data[iVar] < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE; }
+      if (c->vars.data[iVar] >= csp->vars.size) { return CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE; }
+    }
+    if (csp->constraintDefs[c->id].type == CJ_CONSTRAINT_DEF_NO_GOODS) {
+      if (c->vars.size != csp->constraintDefs[c->id].noGoods.arity) {
+        return CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE;
+      }
+    }
+    else {
+      return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
     }
   }
 
+  return CJ_ERROR_OK;
+}
+
+CjError cjCspIsSolved(const CjCsp* csp, const CjIntTuples* solution, int* solved) {
+  if (!csp || !solution) { return CJ_ERROR_ARG; }
+
+  CjError err = cjCspValidate(csp);
+  if (err != CJ_ERROR_OK) { return err; }
+
+  if (solution->arity != -1) {
+    return CJ_ERROR_VALIDATION_SOLUTION_ARITY;
+  }
+  if (csp->vars.size != solution->size) {
+    return CJ_ERROR_VALIDATION_SOLUTION_VARS_SIZE_MISMATCH;
+  }
+
+  // Check variable assignment is within the domain.
+  for (int iVar = 0; iVar < solution->size; ++iVar) {
+    int value = solution->data[iVar];
+    CjDomain* domain = &csp->domains[csp->vars.data[iVar]];
+    if (domain->type != CJ_DOMAIN_VALUES) {
+      return CJ_ERROR_DOMAIN_UNKNOWN_TYPE;
+    }
+    bool valueInDomain = false;
+    for (int iVal = 0; iVal < domain->values.size; ++iVal) {
+      if (value == domain->values.data[iVal]) {
+        valueInDomain = true;
+        break;
+      }
+    }
+    if (!valueInDomain) {
+      *solved = false;
+      return CJ_ERROR_OK;
+    }
+  }
+
+  // Check that variable assignments satisfy constraints.
+  for (int iConstraint = 0; iConstraint < csp->constraintsSize; ++iConstraint) {
+    CjConstraint* constraint = &csp->constraints[iConstraint];
+    CjConstraintDef* def = &csp->constraintDefs[constraint->id];
+    if (def->type != CJ_CONSTRAINT_DEF_NO_GOODS) {
+      return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
+    }
+    bool valuesAllowed = true;
+    for (int iTuple = 0; iTuple < def->noGoods.size; ++iTuple) {
+      bool tupleMatchesSolution = true;
+      for (int iVar = 0; iVar < def->noGoods.arity; ++iVar) {
+        int solutionVal = solution->data[constraint->vars.data[iVar]];
+        int tupleVal = def->noGoods.data[iTuple * def->noGoods.arity + iVar];
+        if (solutionVal != tupleVal) {
+          tupleMatchesSolution = false;
+          break;
+        }
+      }
+      if (tupleMatchesSolution) {
+        valuesAllowed = false;
+        break;
+      }
+    }
+    if (! valuesAllowed) {
+      *solved = false;
+      return CJ_ERROR_OK;
+    }
+  }
+
+  *solved = true;
   return CJ_ERROR_OK;
 }
 #ifndef __CJ_CSP_IO_H__
@@ -1058,6 +1152,10 @@ CjError cjCspValidate(const CjCsp* csp) {
 
 #include <stdio.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // cjIntTuples Parsing and Printing
@@ -1094,6 +1192,10 @@ CjError cjCspJsonParse(const char* json, const size_t jsonLen, CjCsp* csp);
 
 /** return CJ_ERROR_OK on success */
 CjError cjCspJsonPrint(FILE* f, CjCsp* csp);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // __CJ_CSP_IO_H__
 #include <stdio.h>
@@ -1390,7 +1492,7 @@ static int cjCspJsonParseNoGoods(const char* json, jsmntok_t* t, CjConstraintDef
 static int cjCspJsonParseConstraintsDef(const char* json, jsmntok_t* t, CjCsp* csp) {
   logTok("constraintDefs:", json, t);
   if (!json || !t || !csp) { return CJ_ERROR_ARG; }
-  if (t->type != JSMN_ARRAY) { return CJ_CONSTRAINTDEFS_IS_NOT_ARRAY; }
+  if (t->type != JSMN_ARRAY) { return CJ_ERROR_CONSTRAINTDEFS_IS_NOT_ARRAY; }
 
   if (t->size > 0) {
     csp->constraintDefs = cjConstraintDefArray(t->size);
@@ -1412,7 +1514,7 @@ static int cjCspJsonParseConstraintsDef(const char* json, jsmntok_t* t, CjCsp* c
       consumed += 2 + stat;
     }
     else {
-      return CJ_CONSTRAINTDEF_UNKNOWN_TYPE;
+      return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
     }
   }
 
@@ -1675,7 +1777,7 @@ CjError cjCspJsonPrint(FILE* f, CjCsp* csp) {
         fprintf(f, "}");
       }
       else {
-        return CJ_CONSTRAINTDEF_UNKNOWN_TYPE;
+        return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
       }
       if (iDef != csp->constraintDefsSize - 1) { fprintf(f, ",\n"); }
       else { fprintf(f, "\n");  }

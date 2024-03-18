@@ -1,5 +1,8 @@
 include(CTest)
 
+add_executable(cj-test-cpp-compilation)
+target_sources(cj-test-cpp-compilation PRIVATE cj-test-cpp-compilation.cpp ../cj/cj-csp.c ../cj/cj-csp-io.c)
+
 add_executable(cj-test-csp)
 target_sources(cj-test-csp PRIVATE cj-test-csp.c ../cj/cj-csp.c)
 

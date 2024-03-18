@@ -5,6 +5,10 @@
 
 #include "cj-csp.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // cjIntTuples Parsing and Printing
 //
@@ -40,5 +44,9 @@ CjError cjCspJsonParse(const char* json, const size_t jsonLen, CjCsp* csp);
 
 /** return CJ_ERROR_OK on success */
 CjError cjCspJsonPrint(FILE* f, CjCsp* csp);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // __CJ_CSP_IO_H__

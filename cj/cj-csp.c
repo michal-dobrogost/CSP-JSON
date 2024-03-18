@@ -1,5 +1,7 @@
 #include <assert.h>
 #include <stddef.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "cj-csp.h"
@@ -262,15 +264,90 @@ CjError cjCspValidate(const CjCsp* csp) {
   // Check constraints
   if (csp->constraintsSize < 0) { return CJ_ERROR_VALIDATION_CONSTRAINTS_SIZE; }
   for (int iC = 0; iC < csp->constraintsSize; ++iC) {
-    if (csp->constraints[iC].id < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE; }
-    if (csp->constraints[iC].id >= csp->constraintDefsSize) { return CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE; }
-    if (csp->constraints[iC].vars.arity != -1) { return CJ_ERROR_VALIDATION_CONSTRAINT_VARS_ARITY; }
-    if (csp->constraints[iC].vars.size < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE; }
-    for (int iVar = 0; iVar < csp->constraints[iC].vars.size; ++iVar) {
-      if (csp->constraints[iC].vars.data[iVar] < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE; }
-      if (csp->constraints[iC].vars.data[iVar] >= csp->vars.size) { return CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE; }
+    CjConstraint* c = &csp->constraints[iC];
+    if (c->id < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE; }
+    if (c->id >= csp->constraintDefsSize) { return CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE; }
+    if (c->vars.arity != -1) { return CJ_ERROR_VALIDATION_CONSTRAINT_VARS_ARITY; }
+    if (c->vars.size < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE; }
+    for (int iVar = 0; iVar < c->vars.size; ++iVar) {
+      if (c->vars.data[iVar] < 0) { return CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE; }
+      if (c->vars.data[iVar] >= csp->vars.size) { return CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE; }
+    }
+    if (csp->constraintDefs[c->id].type == CJ_CONSTRAINT_DEF_NO_GOODS) {
+      if (c->vars.size != csp->constraintDefs[c->id].noGoods.arity) {
+        return CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE;
+      }
+    }
+    else {
+      return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
     }
   }
 
+  return CJ_ERROR_OK;
+}
+
+CjError cjCspIsSolved(const CjCsp* csp, const CjIntTuples* solution, int* solved) {
+  if (!csp || !solution) { return CJ_ERROR_ARG; }
+
+  CjError err = cjCspValidate(csp);
+  if (err != CJ_ERROR_OK) { return err; }
+
+  if (solution->arity != -1) {
+    return CJ_ERROR_VALIDATION_SOLUTION_ARITY;
+  }
+  if (csp->vars.size != solution->size) {
+    return CJ_ERROR_VALIDATION_SOLUTION_VARS_SIZE_MISMATCH;
+  }
+
+  // Check variable assignment is within the domain.
+  for (int iVar = 0; iVar < solution->size; ++iVar) {
+    int value = solution->data[iVar];
+    CjDomain* domain = &csp->domains[csp->vars.data[iVar]];
+    if (domain->type != CJ_DOMAIN_VALUES) {
+      return CJ_ERROR_DOMAIN_UNKNOWN_TYPE;
+    }
+    bool valueInDomain = false;
+    for (int iVal = 0; iVal < domain->values.size; ++iVal) {
+      if (value == domain->values.data[iVal]) {
+        valueInDomain = true;
+        break;
+      }
+    }
+    if (!valueInDomain) {
+      *solved = false;
+      return CJ_ERROR_OK;
+    }
+  }
+
+  // Check that variable assignments satisfy constraints.
+  for (int iConstraint = 0; iConstraint < csp->constraintsSize; ++iConstraint) {
+    CjConstraint* constraint = &csp->constraints[iConstraint];
+    CjConstraintDef* def = &csp->constraintDefs[constraint->id];
+    if (def->type != CJ_CONSTRAINT_DEF_NO_GOODS) {
+      return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
+    }
+    bool valuesAllowed = true;
+    for (int iTuple = 0; iTuple < def->noGoods.size; ++iTuple) {
+      bool tupleMatchesSolution = true;
+      for (int iVar = 0; iVar < def->noGoods.arity; ++iVar) {
+        int solutionVal = solution->data[constraint->vars.data[iVar]];
+        int tupleVal = def->noGoods.data[iTuple * def->noGoods.arity + iVar];
+        if (solutionVal != tupleVal) {
+          tupleMatchesSolution = false;
+          break;
+        }
+      }
+      if (tupleMatchesSolution) {
+        valuesAllowed = false;
+        break;
+      }
+    }
+    if (! valuesAllowed) {
+      *solved = false;
+      return CJ_ERROR_OK;
+    }
+  }
+
+  *solved = true;
   return CJ_ERROR_OK;
 }

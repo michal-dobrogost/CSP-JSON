@@ -294,7 +294,7 @@ static int cjCspJsonParseNoGoods(const char* json, jsmntok_t* t, CjConstraintDef
 static int cjCspJsonParseConstraintsDef(const char* json, jsmntok_t* t, CjCsp* csp) {
   logTok("constraintDefs:", json, t);
   if (!json || !t || !csp) { return CJ_ERROR_ARG; }
-  if (t->type != JSMN_ARRAY) { return CJ_CONSTRAINTDEFS_IS_NOT_ARRAY; }
+  if (t->type != JSMN_ARRAY) { return CJ_ERROR_CONSTRAINTDEFS_IS_NOT_ARRAY; }
 
   if (t->size > 0) {
     csp->constraintDefs = cjConstraintDefArray(t->size);
@@ -316,7 +316,7 @@ static int cjCspJsonParseConstraintsDef(const char* json, jsmntok_t* t, CjCsp* c
       consumed += 2 + stat;
     }
     else {
-      return CJ_CONSTRAINTDEF_UNKNOWN_TYPE;
+      return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
     }
   }
 
@@ -579,7 +579,7 @@ CjError cjCspJsonPrint(FILE* f, CjCsp* csp) {
         fprintf(f, "}");
       }
       else {
-        return CJ_CONSTRAINTDEF_UNKNOWN_TYPE;
+        return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
       }
       if (iDef != csp->constraintDefsSize - 1) { fprintf(f, ",\n"); }
       else { fprintf(f, "\n");  }

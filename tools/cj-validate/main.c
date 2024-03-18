@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
 
   err = cjCspValidate(&csp);
   if (err == CJ_ERROR_OK) {
-    printf("Valid\n");
+    printf("OK\n");
     return 0;
   }
 

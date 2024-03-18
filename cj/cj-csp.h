@@ -1,6 +1,10 @@
 #ifndef __CJ_CSP_H__
 #define __CJ_CSP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // Errors
 //
@@ -48,9 +52,9 @@ typedef enum CjError {
   /** csp-json.vars[i] int not an int. */
   CJ_ERROR_VAR_IS_NOT_INT = -19,
   /** csp-json.constraintDefs is not an array. */
-  CJ_CONSTRAINTDEFS_IS_NOT_ARRAY = -20,
+  CJ_ERROR_CONSTRAINTDEFS_IS_NOT_ARRAY = -20,
   /** csp-json.constraintDefs[i] is an unknown type (eg. noGoods is known). */
-  CJ_CONSTRAINTDEF_UNKNOWN_TYPE = -21,
+  CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE = -21,
   /** csp-json.constraintDefs[i].noGoods is not an array. */
   CJ_ERROR_NOGOODS_IS_NOT_ARRAY = -22,
   /** csp-json.constraintDefs[i].noGoods[j] is not a tuple. */
@@ -93,7 +97,9 @@ typedef enum CjError {
   CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE = -45,
   CJ_ERROR_VALIDATION_CONSTRAINT_VARS_ARITY = -46,
   CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE = -47,
-  CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE = -48
+  CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE = -48,
+  CJ_ERROR_VALIDATION_SOLUTION_ARITY = -49,
+  CJ_ERROR_VALIDATION_SOLUTION_VARS_SIZE_MISMATCH = -50,
 } CjError;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -305,5 +311,16 @@ void cjCspFree(CjCsp* inout);
  * Eg. check that the indexes in vars are valid in domains.
  */
 CjError cjCspValidate(const CjCsp* csp);
+
+/**
+ * @return CJ_ERROR_OK if solution solves csp,
+ *         CJ_ERROR_NOT_SOLUTION if solution validates but does not solve csp,
+ *         other error if the solution or csp does not validate.
+ */
+CjError cjCspIsSolved(const CjCsp* csp, const CjIntTuples* solution, int* solved);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // __CJ_CSP_H__

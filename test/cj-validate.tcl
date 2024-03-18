@@ -10,7 +10,7 @@ set cjValidatePath [lindex $argv 0]
 set projectPath [lindex $argv 1]
 
 foreach testFile [glob-r [file join $projectPath "data"] *.json] {
-  testCmd [list $cjValidatePath --csp $testFile] -exit-eq 0 -out-eq "Valid"
+  testCmd [list $cjValidatePath --csp $testFile] -exit-eq 0 -out-eq "OK"
 }
 
 foreach testFile [glob-r [file join $projectPath "test" "data" "validation-neg"] *.json] {

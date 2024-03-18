@@ -7,6 +7,7 @@
 proc testCmd {cmd modeExit expectedExit modeOut expectedOut} {
   puts -nonewline "$cmd ... "
 
+  # TODO: capture stderr
   set resultExit [catch {exec -ignorestderr {*}$cmd} msg]
   if {$resultExit} {
     # Remove error message appended by exec

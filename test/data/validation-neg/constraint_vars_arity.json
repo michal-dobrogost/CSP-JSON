@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "id": "test/invalidation/constraint_vars_arity",
+    "algo": "test",
+    "params": null
+  },
+  "domains": [
+    {"values": [0,1]}
+  ],
+  "vars": [0, 0, 0, 0],
+  "constraintDefs": [
+    {"noGoods": [[0,1]]}
+  ],
+  "constraints": [
+    {"id": 0, "vars": [0,1,2]}
+  ]
+}
