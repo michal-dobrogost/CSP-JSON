@@ -411,6 +411,8 @@ CjError AddNogood(int tupleIdx, int val1, int val2, CjConstraintDef* constraintD
 CjError EndCSP(CjCsp* csp)
 {
   if (!csp) { return CJ_ERROR_ARG; }
+  int err = cjCspNormalize(csp);
+  if (err != CJ_ERROR_OK) { return err; }
   return cjCspJsonPrint(stdout, csp);
 }
 

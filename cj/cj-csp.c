@@ -286,6 +286,52 @@ CjError cjCspValidate(const CjCsp* csp) {
   return CJ_ERROR_OK;
 }
 
+static int compareInts(const void* x, const void* y) {
+   return ( *(int*)x - *(int*)y );
+}
+
+static int compareIntTuples2(const void* xPtr, const void* yPtr) {
+  int x0 = ((int*) xPtr)[0];
+  int y0 = ((int*) yPtr)[0];
+  int x1 = ((int*) xPtr)[1];
+  int y1 = ((int*) yPtr)[1];
+
+  if (x0 < y0) {
+    return -1;
+  }
+  else if (x0 > y0) {
+    return 1;
+  }
+  return x1 - y1;
+}
+
+CjError cjCspNormalize(const CjCsp* csp) {
+  if (!csp) { return CJ_ERROR_ARG; }
+
+  for (int iDom = 0; iDom < csp->domainsSize; ++iDom) {
+    if (csp->domains[iDom].type != CJ_DOMAIN_VALUES) {
+      return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
+    }
+    qsort(csp->domains[iDom].values.data, csp->domains[iDom].values.size, sizeof(int), compareInts);
+  }
+
+  for (int iCDef = 0; iCDef < csp->constraintDefsSize; ++iCDef) {
+    if (csp->constraintDefs[iCDef].type != CJ_CONSTRAINT_DEF_NO_GOODS) {
+      return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
+    }
+    if (csp->constraintDefs[iCDef].noGoods.arity != 2) {
+      return CJ_ERROR_NOGOODS_ARRAY_DIFFERENT_ARITIES;
+    }
+    qsort(
+      csp->constraintDefs[iCDef].noGoods.data,
+      csp->constraintDefs[iCDef].noGoods.size,
+      sizeof(int) * csp->constraintDefs[iCDef].noGoods.arity,
+      compareIntTuples2);
+  }
+
+  return CJ_ERROR_OK;
+}
+
 CjError cjCspIsSolved(const CjCsp* csp, const CjIntTuples* solution, int* solved) {
   if (!csp || !solution) { return CJ_ERROR_ARG; }
 

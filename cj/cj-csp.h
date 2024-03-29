@@ -313,6 +313,12 @@ void cjCspFree(CjCsp* inout);
 CjError cjCspValidate(const CjCsp* csp);
 
 /**
+ * Transforms the CSP in-place to a normal form (eg. sort domain and no-good
+ * values).
+ */
+CjError cjCspNormalize(const CjCsp* csp);
+
+/**
  * @return CJ_ERROR_OK if solution solves csp,
  *         CJ_ERROR_NOT_SOLUTION if solution validates but does not solve csp,
  *         other error if the solution or csp does not validate.
