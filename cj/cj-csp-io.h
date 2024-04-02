@@ -27,7 +27,23 @@ CjError cjIntTuplesParse(
   CjIntTuples* ts);
 
 /** Print from ts. @return CJ_ERROR_OK on success */
-CjError cjIntTuplesJsonPrint(FILE* f, CjIntTuples* ts);
+CjError cjIntTuplesJsonPrint(FILE* f, const CjIntTuples* ts);
+
+////////////////////////////////////////////////////////////////////////////////
+// CjConstraintDef Parsing and Printing
+//
+
+/**
+ * Parse into cdef which needs to be freed prior to call.
+ * @return CJ_ERROR_OK on success
+ */
+CjError cjConstraintDefParse(
+  const char* json,
+  const size_t jsonLen,
+  CjConstraintDef* cdef);
+
+/** Print from cdef. @return CJ_ERROR_OK on success */
+CjError cjConstraintDefJsonPrint(FILE* f, const CjConstraintDef* cdef);
 
 ////////////////////////////////////////////////////////////////////////////////
 // cjCsp Parsing and Printing
@@ -43,7 +59,7 @@ CjError cjIntTuplesJsonPrint(FILE* f, CjIntTuples* ts);
 CjError cjCspJsonParse(const char* json, const size_t jsonLen, CjCsp* csp);
 
 /** return CJ_ERROR_OK on success */
-CjError cjCspJsonPrint(FILE* f, CjCsp* csp);
+CjError cjCspJsonPrint(FILE* f, const CjCsp* csp);
 
 #ifdef __cplusplus
 } // extern "C"

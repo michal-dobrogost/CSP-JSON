@@ -291,7 +291,22 @@ static int cjCspJsonParseNoGoods(const char* json, jsmntok_t* t, CjConstraintDef
   return stat;
 }
 
-static int cjCspJsonParseConstraintsDef(const char* json, jsmntok_t* t, CjCsp* csp) {
+static int cjCspJsonParseConstraintsDef(const char* json, jsmntok_t* t, CjConstraintDef* constraintDef) {
+  logTok("noGoods:", json, t);
+  if (!json || !t || !constraintDef) { return CJ_ERROR_ARG; }
+  if (t->type != JSMN_OBJECT) { return CJ_ERROR_CONSTRAINTDEF_IS_NOT_OBJECT; }
+
+  if (jsonEq(json, t + 1, "noGoods")) {
+    int stat = cjCspJsonParseNoGoods(json, t + 2, constraintDef);
+    if (stat < 0) { return stat; }
+    return 2 + stat;
+  }
+  else {
+    return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
+  }
+}
+
+static int cjCspJsonParseConstraintsDefs(const char* json, jsmntok_t* t, CjCsp* csp) {
   logTok("constraintDefs:", json, t);
   if (!json || !t || !csp) { return CJ_ERROR_ARG; }
   if (t->type != JSMN_ARRAY) { return CJ_ERROR_CONSTRAINTDEFS_IS_NOT_ARRAY; }
@@ -299,25 +314,19 @@ static int cjCspJsonParseConstraintsDef(const char* json, jsmntok_t* t, CjCsp* c
   if (t->size > 0) {
     csp->constraintDefs = cjConstraintDefArray(t->size);
     if (!csp->constraintDefs) { return CJ_ERROR_NOMEM; }
-    csp->constraintDefsSize = t->size;
   }
   csp->constraintDefsSize = t->size;
 
   int consumed = 1;
   for (int iChild = 0; iChild < t->size; ++iChild) {
     logTok("constraintDefs-child:", json, &t[consumed]);
-    if (jsonEq(json, t + consumed + 1, "noGoods")) {
-      int stat = cjCspJsonParseNoGoods(json, t + consumed + 2, &csp->constraintDefs[iChild]);
-      if (stat < 0) {
-        cjConstraintDefArrayFree(&csp->constraintDefs, csp->constraintDefsSize);
-        csp->constraintDefsSize = 0;
-        return stat;
-      }
-      consumed += 2 + stat;
+    int stat = cjCspJsonParseConstraintsDef(json, t + consumed, &csp->constraintDefs[iChild]);
+    if (stat < 0) {
+      cjConstraintDefArrayFree(&csp->constraintDefs, csp->constraintDefsSize);
+      csp->constraintDefsSize = 0;
+      return stat;
     }
-    else {
-      return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
-    }
+    consumed += stat;
   }
 
   return consumed;
@@ -408,7 +417,7 @@ static int cjCspJsonParseTop(const char* json, jsmntok_t* t, CjCsp* csp) {
       consumed += 1 + stat;
     }
     else if (jsonEq(json, t + consumed, "constraintDefs")) {
-      int stat = cjCspJsonParseConstraintsDef(json, t + consumed + 1, csp);
+      int stat = cjCspJsonParseConstraintsDefs(json, t + consumed + 1, csp);
       if (stat < 0) { return stat; }
       consumed += 1 + stat;
     }
@@ -467,7 +476,7 @@ static CjError jsmnTokenize(const char* json, const size_t jsonLen, jsmntok_t** 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Public parsing functions
+// CjIntTuples IO
 //
 
 CjError cjIntTuplesParse(
@@ -491,7 +500,7 @@ CjError cjIntTuplesParse(
   else                          { return CJ_ERROR_OK; }
 }
 
-CjError cjIntTuplesJsonPrint(FILE* f, CjIntTuples* ts) {
+CjError cjIntTuplesJsonPrint(FILE* f, const CjIntTuples* ts) {
   if (!f || !ts) { return CJ_ERROR_ARG; }
   if (ts->size < 0 || ts->arity < -1) { return CJ_ERROR_ARG; }
   fprintf(f, "[");
@@ -509,10 +518,48 @@ CjError cjIntTuplesJsonPrint(FILE* f, CjIntTuples* ts) {
   return CJ_ERROR_OK;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// CjConstraintDef IO
+//
+
+CjError cjConstraintDefParse(
+  const char* json,
+  const size_t jsonLen,
+  CjConstraintDef* cdef)
+{
+  if (!json || !cdef) { return CJ_ERROR_ARG; }
+
+  jsmntok_t* t = NULL;
+  int numTokens = 0;
+  CjError stat = jsmnTokenize(json, jsonLen, &t, &numTokens);
+  if (stat != CJ_ERROR_OK) { return stat; }
+  if (numTokens == 0) { free(t); return CJ_ERROR_ARG; }
+
+  int consumedOrStat = cjCspJsonParseConstraintsDef(json, t, cdef);
+  free(t);
+  if (consumedOrStat < 0)       { return consumedOrStat; }
+  else if (consumedOrStat == 0) { return CJ_ERROR_ARG; }
+  else                          { return CJ_ERROR_OK; }
+}
+
+CjError cjConstraintDefJsonPrint(FILE* f, const CjConstraintDef* cdef) {
+  if (!f || !cdef) { return CJ_ERROR_ARG; }
+
+  if (cdef->type == CJ_CONSTRAINT_DEF_NO_GOODS) {
+    fprintf(f, "    {\"noGoods\": ");
+    CjError err = cjIntTuplesJsonPrint(f, &cdef->noGoods);
+    if (err != CJ_ERROR_OK) { return err; }
+    fprintf(f, "}");
+    return CJ_ERROR_OK;
+  }
+  else {
+    return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
+  }
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Public printing functions
+// CjCsp IO
 //
 
 CjError cjCspJsonParse(const char* json, const size_t jsonLen, CjCsp* csp) {
@@ -533,9 +580,10 @@ CjError cjCspJsonParse(const char* json, const size_t jsonLen, CjCsp* csp) {
   else                          { return CJ_ERROR_OK; }
 }
 
-
-CjError cjCspJsonPrint(FILE* f, CjCsp* csp) {
+CjError cjCspJsonPrint(FILE* f, const CjCsp* csp) {
   if (!f || !csp) { return CJ_ERROR_ARG; }
+  CjError err = CJ_ERROR_OK;
+
   fprintf(f, "{\n");
 
   fprintf(f, "  \"meta\": {\n");
@@ -573,14 +621,8 @@ CjError cjCspJsonPrint(FILE* f, CjCsp* csp) {
   else {
     fprintf(f, "  \"constraintDefs\": [\n");
     for (int iDef = 0; iDef < csp->constraintDefsSize; ++iDef) {
-      if (csp->constraintDefs[iDef].type == CJ_CONSTRAINT_DEF_NO_GOODS) {
-        fprintf(f, "    {\"noGoods\": ");
-        cjIntTuplesJsonPrint(f, &csp->constraintDefs[iDef].noGoods);
-        fprintf(f, "}");
-      }
-      else {
-        return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
-      }
+      err = cjConstraintDefJsonPrint(f, &csp->constraintDefs[iDef]);
+      if (err != CJ_ERROR_OK) { return err; }
       if (iDef != csp->constraintDefsSize - 1) { fprintf(f, ",\n"); }
       else { fprintf(f, "\n");  }
     }
@@ -606,5 +648,4 @@ CjError cjCspJsonPrint(FILE* f, CjCsp* csp) {
 
   return CJ_ERROR_OK;
 }
-
 

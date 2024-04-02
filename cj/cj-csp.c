@@ -129,7 +129,7 @@ CjConstraintDef cjConstraintDefInit() {
   return x;
 }
 
-CjError cjConstraintDefNoGoodAlloc(int arity, int size, CjConstraintDef* out) {
+CjError cjConstraintDefNoGoodAlloc(int size, int arity, CjConstraintDef* out) {
   if (!out) { return CJ_ERROR_ARG; }
   out->type = CJ_CONSTRAINT_DEF_NO_GOODS;
   int stat = cjIntTuplesAlloc(size, arity, &out->noGoods);

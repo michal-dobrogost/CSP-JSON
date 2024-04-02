@@ -39,6 +39,20 @@ const char* cspJsonSmall= "{"
   "]"
 "}";
 
+/** @return the malloc'ed buffer pointing to the null-terminated string. */
+char* intTuplesToStr(const CjIntTuples* ts) {
+  const size_t size = 1024*64;
+  char* buf = malloc(size);
+  memset(buf, 0, size);
+  if (!buf) { free(buf); return NULL; }
+  FILE* f = fmemopen(buf, size, "w");
+  if (!f) { free(buf); return NULL; }
+  CjError err = cjIntTuplesJsonPrint(f, ts);
+  fclose(f);
+  if (err != CJ_ERROR_OK) { free(buf); return NULL; }
+  return buf;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // cjIntTuplesJsonParse
 
@@ -148,6 +162,167 @@ void cjIntTuplesJsonPrintTestNull() {
 
   CjIntTuples ts = cjIntTuplesInit();
   EXPECT_RETURN(cjIntTuplesJsonPrint(NULL, &ts), CJ_ERROR_ARG);
+}
+
+void cjIntTuplesJsonPrintTestArity0Size0() {
+  CjIntTuples ts = cjIntTuplesInit();
+  EXPECT_RETURN(cjIntTuplesAlloc(0 /*size*/, 0/*arity*/, &ts), CJ_ERROR_OK);
+  char* str = intTuplesToStr(&ts);
+  EXPECT_PTR_NEQ(str, NULL);
+  EXPECT_STR_EQ(str, "[]");
+  free(str);
+}
+
+void cjIntTuplesJsonPrintTestArity0Size2() {
+  CjIntTuples ts = cjIntTuplesInit();
+  EXPECT_RETURN(cjIntTuplesAlloc(2 /*size*/, 0/*arity*/, &ts), CJ_ERROR_OK);
+  char* str = intTuplesToStr(&ts);
+  EXPECT_PTR_NEQ(str, NULL);
+  EXPECT_STR_EQ(str, "[[], []]");
+  free(str);
+}
+
+void cjIntTuplesJsonPrintTestArity1Size0() {
+  CjIntTuples ts = cjIntTuplesInit();
+  EXPECT_RETURN(cjIntTuplesAlloc(0 /*size*/, 1/*arity*/, &ts), CJ_ERROR_OK);
+  char* str = intTuplesToStr(&ts);
+  EXPECT_PTR_NEQ(str, NULL);
+  EXPECT_STR_EQ(str, "[]");
+  free(str);
+}
+
+void cjIntTuplesJsonPrintTestArity1Size2() {
+  CjIntTuples ts = cjIntTuplesInit();
+  EXPECT_RETURN(cjIntTuplesAlloc(2 /*size*/, 1/*arity*/, &ts), CJ_ERROR_OK);
+  ts.data[0] = 1;
+  ts.data[1] = 2;
+  char* str = intTuplesToStr(&ts);
+  EXPECT_PTR_NEQ(str, NULL);
+  EXPECT_STR_EQ(str, "[[1], [2]]");
+  free(str);
+}
+
+void cjIntTuplesJsonPrintTestArity2Size0() {
+  CjIntTuples ts = cjIntTuplesInit();
+  EXPECT_RETURN(cjIntTuplesAlloc(0 /*size*/, 2/*arity*/, &ts), CJ_ERROR_OK);
+  char* str = intTuplesToStr(&ts);
+  EXPECT_PTR_NEQ(str, NULL);
+  EXPECT_STR_EQ(str, "[]");
+  free(str);
+}
+
+void cjIntTuplesJsonPrintTestArity2Size2() {
+  CjIntTuples ts = cjIntTuplesInit();
+  EXPECT_RETURN(cjIntTuplesAlloc(2 /*size*/, 2/*arity*/, &ts), CJ_ERROR_OK);
+  ts.data[0] = 1;
+  ts.data[1] = 2;
+  ts.data[2] = 3;
+  ts.data[3] = 4;
+  char* str = intTuplesToStr(&ts);
+  EXPECT_PTR_NEQ(str, NULL);
+  EXPECT_STR_EQ(str, "[[1, 2], [3, 4]]");
+  free(str);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// cjConstraintDefParse
+
+void cjConstraintDefParseTestNull() {
+  CjConstraintDef cdef = cjConstraintDefInit();
+  EXPECT_RETURN(cjConstraintDefParse(NULL, 0, &cdef), CJ_ERROR_ARG);
+  EXPECT_EQ(cdef.type, CJ_CONSTRAINT_DEF_UNDEF);
+  EXPECT_RETURN(cjConstraintDefParse("", 0, NULL), CJ_ERROR_ARG);
+  EXPECT_EQ(cdef.type, CJ_CONSTRAINT_DEF_UNDEF);
+}
+
+void cjConstraintDefParseTestEmpty() {
+  const char* tsJson = "";
+  CjConstraintDef cdef = cjConstraintDefInit();
+  EXPECT_RETURN(cjConstraintDefParse(tsJson, strlen(tsJson), &cdef), CJ_ERROR_ARG);
+  EXPECT_EQ(cdef.type, CJ_CONSTRAINT_DEF_UNDEF);
+}
+void cjConstraintDefParseTestNotObject() {
+  const char* tsJson = "[]";
+  CjConstraintDef cdef = cjConstraintDefInit();
+  EXPECT_RETURN(cjConstraintDefParse(tsJson, strlen(tsJson), &cdef), CJ_ERROR_CONSTRAINTDEF_IS_NOT_OBJECT);
+  EXPECT_EQ(cdef.type, CJ_CONSTRAINT_DEF_UNDEF);
+}
+
+void cjConstraintDefParseTestUnknownType() {
+  const char* tsJson = "{\"what-type\": null}";
+  CjConstraintDef cdef = cjConstraintDefInit();
+  EXPECT_RETURN(cjConstraintDefParse(tsJson, strlen(tsJson), &cdef), CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE);
+  EXPECT_EQ(cdef.type, CJ_CONSTRAINT_DEF_UNDEF);
+}
+
+void cjConstraintDefParseTestNoGoodsWrongType() {
+  const char* tsJson = "{\"noGoods\": \"hello\"}";
+  CjConstraintDef cdef = cjConstraintDefInit();
+  EXPECT_RETURN(cjConstraintDefParse(tsJson, strlen(tsJson), &cdef), CJ_ERROR_NOGOODS_IS_NOT_ARRAY);
+  EXPECT_EQ(cdef.type, CJ_CONSTRAINT_DEF_UNDEF);
+}
+
+void cjConstraintDefParseTestNoGoodsEmpty() {
+  const char* tsJson = "{\"noGoods\": []}";
+  CjConstraintDef cdef = cjConstraintDefInit();
+  EXPECT_RETURN(cjConstraintDefParse(tsJson, strlen(tsJson), &cdef), CJ_ERROR_OK);
+  EXPECT_EQ(cdef.type, CJ_CONSTRAINT_DEF_NO_GOODS);
+  EXPECT_EQ(cdef.noGoods.size, 0);
+  EXPECT_EQ(cdef.noGoods.arity, 0);
+}
+
+void cjConstraintDefParseTestNoGoodsArity1() {
+  const char* tsJson = "{\"noGoods\": [[1]]}";
+  CjConstraintDef cdef = cjConstraintDefInit();
+  EXPECT_RETURN(cjConstraintDefParse(tsJson, strlen(tsJson), &cdef), CJ_ERROR_OK);
+  char* tsStr = intTuplesToStr(&cdef.noGoods);
+  EXPECT_PTR_NEQ(tsStr, NULL);
+  EXPECT_STR_EQ(tsStr, "[[1]]");
+}
+
+void cjConstraintDefParseTestNoGoodsArity2() {
+  const char* tsJson = "{\"noGoods\": [[1,2],[3,4]]}";
+  CjConstraintDef cdef = cjConstraintDefInit();
+  EXPECT_RETURN(cjConstraintDefParse(tsJson, strlen(tsJson), &cdef), CJ_ERROR_OK);
+  char* tsStr = intTuplesToStr(&cdef.noGoods);
+  EXPECT_PTR_NEQ(tsStr, NULL);
+  EXPECT_STR_EQ(tsStr, "[[1, 2], [3, 4]]");
+}
+
+void cjConstraintDefParseTestNoGoodsArity3() {
+  const char* tsJson = "{\"noGoods\": [[1,2,3],[4,5,6]]}";
+  CjConstraintDef cdef = cjConstraintDefInit();
+  EXPECT_RETURN(cjConstraintDefParse(tsJson, strlen(tsJson), &cdef), CJ_ERROR_OK);
+  char* tsStr = intTuplesToStr(&cdef.noGoods);
+  EXPECT_PTR_NEQ(tsStr, NULL);
+  EXPECT_STR_EQ(tsStr, "[[1, 2, 3], [4, 5, 6]]");
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// cjConstraintDefJsonPrint
+
+void cjConstraintDefJsonPrintTestNull() {
+  EXPECT_RETURN(cjConstraintDefJsonPrint(stdout, NULL), CJ_ERROR_ARG);
+
+  CjConstraintDef cdef = cjConstraintDefInit();
+  EXPECT_RETURN(cjConstraintDefJsonPrint(NULL, &cdef), CJ_ERROR_ARG);
+}
+
+void cjConstraintDefJsonPrintTestNoGoods() {
+  const size_t size = 1024*64;
+  char* buf = malloc(size);
+  memset(buf, 0, size);
+  EXPECT_PTR_NEQ(buf, NULL);
+  FILE* f = fmemopen(buf, size, "w");
+  EXPECT_PTR_NEQ(f, NULL);
+
+  CjConstraintDef cdef;
+  EXPECT_RETURN(cjConstraintDefNoGoodAlloc(2/*size*/, 3/*arity*/, &cdef), CJ_ERROR_OK);
+  EXPECT_RETURN(cjConstraintDefJsonPrint(f, &cdef), CJ_ERROR_OK);
+  EXPECT_STR_EQ(buf, "{\"noGoods\": [[1,2,3], [4, 5, 6]]}");
+
+  fclose(f);
+  free(buf);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -263,6 +438,25 @@ int main(int argc, char** argv) {
   TEST(cjIntTuplesParseTest2DInvalidSubItemType());
 
   TEST(cjIntTuplesJsonPrintTestNull());
+  TEST(cjIntTuplesJsonPrintTestArity0Size0());
+  TEST(cjIntTuplesJsonPrintTestArity0Size2());
+  TEST(cjIntTuplesJsonPrintTestArity1Size0());
+  TEST(cjIntTuplesJsonPrintTestArity1Size2());
+  TEST(cjIntTuplesJsonPrintTestArity2Size0());
+  TEST(cjIntTuplesJsonPrintTestArity2Size2());
+
+  TEST(cjConstraintDefParseTestNull());
+  TEST(cjConstraintDefParseTestEmpty());
+  TEST(cjConstraintDefParseTestNotObject());
+  TEST(cjConstraintDefParseTestUnknownType());
+  TEST(cjConstraintDefParseTestNoGoodsWrongType());
+  TEST(cjConstraintDefParseTestNoGoodsEmpty());
+  TEST(cjConstraintDefParseTestNoGoodsArity1());
+  TEST(cjConstraintDefParseTestNoGoodsArity2());
+  TEST(cjConstraintDefParseTestNoGoodsArity3());
+
+  TEST(cjConstraintDefJsonPrintTestNull());
+  TEST(cjConstraintDefJsonPrintTestNoGoods());
 
   TEST(cjCspJsonParseTestMin());
   TEST(cjCspJsonParseTestNull());

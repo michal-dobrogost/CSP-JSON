@@ -524,53 +524,55 @@ typedef enum CjError {
   CJ_ERROR_VAR_IS_NOT_INT = -19,
   /** csp-json.constraintDefs is not an array. */
   CJ_ERROR_CONSTRAINTDEFS_IS_NOT_ARRAY = -20,
+  /** csp-json.constraintDefs[i] is not an object. */
+  CJ_ERROR_CONSTRAINTDEF_IS_NOT_OBJECT = -21,
   /** csp-json.constraintDefs[i] is an unknown type (eg. noGoods is known). */
-  CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE = -21,
+  CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE = -22,
   /** csp-json.constraintDefs[i].noGoods is not an array. */
-  CJ_ERROR_NOGOODS_IS_NOT_ARRAY = -22,
+  CJ_ERROR_NOGOODS_IS_NOT_ARRAY = -23,
   /** csp-json.constraintDefs[i].noGoods[j] is not a tuple. */
-  CJ_ERROR_NOGOODS_ARRAY_HAS_NOT_A_TUPLE = -23,
+  CJ_ERROR_NOGOODS_ARRAY_HAS_NOT_A_TUPLE = -24,
   /** csp-json.constraintDefs[i].noGoods[j] has different arity than at j-1. */
-  CJ_ERROR_NOGOODS_ARRAY_DIFFERENT_ARITIES = -24,
+  CJ_ERROR_NOGOODS_ARRAY_DIFFERENT_ARITIES = -25,
   /** csp-json.constraintDefs[i].noGoods[j][k] is not an integer. */
-  CJ_ERROR_NOGOODS_ARRAY_VALUE_IS_NOT_INT = -25,
+  CJ_ERROR_NOGOODS_ARRAY_VALUE_IS_NOT_INT = -26,
   /** csp-json.constraints is not an array. */
-  CJ_ERROR_CONSTRAINTS_IS_NOT_ARRAY = -26,
+  CJ_ERROR_CONSTRAINTS_IS_NOT_ARRAY = -27,
   /** csp-json.constraints[i] is not an object. */
-  CJ_ERROR_CONSTRAINT_IS_NOT_OBJECT = -27,
+  CJ_ERROR_CONSTRAINT_IS_NOT_OBJECT = -28,
   /** csp-json.constraints[i].id is not an integer. */
-  CJ_ERROR_CONSTRAINT_ID_IS_NOT_INT = -28,
+  CJ_ERROR_CONSTRAINT_ID_IS_NOT_INT = -29,
   /** csp-json.constraints[i].vars is not an array. */
-  CJ_ERROR_CONSTRAINT_VARS_IS_NOT_ARRAY = -29,
+  CJ_ERROR_CONSTRAINT_VARS_IS_NOT_ARRAY = -30,
   /** csp-json.constraints[i].vars[j] is not an integer. */
-  CJ_ERROR_CONSTRAINT_VAR_IS_NOT_INT = -30,
+  CJ_ERROR_CONSTRAINT_VAR_IS_NOT_INT = -31,
   /** csp-json.constraints[i] has an unknown field (eg. "id" key is known). */
-  CJ_ERROR_CONSTRAINT_UNKNOWN_FIELD = -31,
+  CJ_ERROR_CONSTRAINT_UNKNOWN_FIELD = -32,
   /** csp-json (the top-level object) is not an object. */
-  CJ_ERROR_CSPJSON_IS_NOT_OBJECT = -32,
+  CJ_ERROR_CSPJSON_IS_NOT_OBJECT = -33,
   /** csp-json (the top-level object) is missing or has extra fields. */
-  CJ_ERROR_CSPJSON_BAD_FIELD_COUNT = -33,
+  CJ_ERROR_CSPJSON_BAD_FIELD_COUNT = -34,
   /** csp-json (the top-level object) has an unknown field (eg. "meta" is known) */
-  CJ_ERROR_CSPJSON_UNKNOWN_FIELD = -34,
+  CJ_ERROR_CSPJSON_UNKNOWN_FIELD = -35,
   /** CjIntTuples[i] is not an array nor integer, or is of inconsistent type. */
-  CJ_ERROR_INTTUPLES_ITEM_TYPE = -35,
+  CJ_ERROR_INTTUPLES_ITEM_TYPE = -36,
   /** Expected an array, got something else. */
-  CJ_ERROR_IS_NOT_ARRAY = -36,
+  CJ_ERROR_IS_NOT_ARRAY = -37,
   /** Validation failed because of invalid domains.size. */
-  CJ_ERROR_VALIDATION_DOMAINS_SIZE = -37,
-  CJ_ERROR_VALIDATION_DOMAINS_TYPE = -38,
-  CJ_ERROR_VALIDATION_VARS_ARITY = -39,
-  CJ_ERROR_VALIDATION_VARS_SIZE = -40,
-  CJ_ERROR_VALIDATION_VAR_RANGE = -41,
-  CJ_ERROR_VALIDATION_CONSTRAINTDEFS_SIZE = -42,
-  CJ_ERROR_VALIDATION_CONSTRAINTDEF_TYPE = -43,
-  CJ_ERROR_VALIDATION_CONSTRAINTS_SIZE = -44,
-  CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE = -45,
-  CJ_ERROR_VALIDATION_CONSTRAINT_VARS_ARITY = -46,
-  CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE = -47,
-  CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE = -48,
-  CJ_ERROR_VALIDATION_SOLUTION_ARITY = -49,
-  CJ_ERROR_VALIDATION_SOLUTION_VARS_SIZE_MISMATCH = -50,
+  CJ_ERROR_VALIDATION_DOMAINS_SIZE = -38,
+  CJ_ERROR_VALIDATION_DOMAINS_TYPE = -39,
+  CJ_ERROR_VALIDATION_VARS_ARITY = -40,
+  CJ_ERROR_VALIDATION_VARS_SIZE = -41,
+  CJ_ERROR_VALIDATION_VAR_RANGE = -42,
+  CJ_ERROR_VALIDATION_CONSTRAINTDEFS_SIZE = -43,
+  CJ_ERROR_VALIDATION_CONSTRAINTDEF_TYPE = -44,
+  CJ_ERROR_VALIDATION_CONSTRAINTS_SIZE = -45,
+  CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE = -46,
+  CJ_ERROR_VALIDATION_CONSTRAINT_VARS_ARITY = -47,
+  CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE = -48,
+  CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE = -49,
+  CJ_ERROR_VALIDATION_SOLUTION_ARITY = -50,
+  CJ_ERROR_VALIDATION_SOLUTION_VARS_SIZE_MISMATCH = -51,
 } CjError;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -931,7 +933,7 @@ CjConstraintDef cjConstraintDefInit() {
   return x;
 }
 
-CjError cjConstraintDefNoGoodAlloc(int arity, int size, CjConstraintDef* out) {
+CjError cjConstraintDefNoGoodAlloc(int size, int arity, CjConstraintDef* out) {
   if (!out) { return CJ_ERROR_ARG; }
   out->type = CJ_CONSTRAINT_DEF_NO_GOODS;
   int stat = cjIntTuplesAlloc(size, arity, &out->noGoods);
@@ -1227,7 +1229,23 @@ CjError cjIntTuplesParse(
   CjIntTuples* ts);
 
 /** Print from ts. @return CJ_ERROR_OK on success */
-CjError cjIntTuplesJsonPrint(FILE* f, CjIntTuples* ts);
+CjError cjIntTuplesJsonPrint(FILE* f, const CjIntTuples* ts);
+
+////////////////////////////////////////////////////////////////////////////////
+// CjConstraintDef Parsing and Printing
+//
+
+/**
+ * Parse into cdef which needs to be freed prior to call.
+ * @return CJ_ERROR_OK on success
+ */
+CjError cjConstraintDefParse(
+  const char* json,
+  const size_t jsonLen,
+  CjConstraintDef* cdef);
+
+/** Print from cdef. @return CJ_ERROR_OK on success */
+CjError cjConstraintDefJsonPrint(FILE* f, const CjConstraintDef* cdef);
 
 ////////////////////////////////////////////////////////////////////////////////
 // cjCsp Parsing and Printing
@@ -1243,7 +1261,7 @@ CjError cjIntTuplesJsonPrint(FILE* f, CjIntTuples* ts);
 CjError cjCspJsonParse(const char* json, const size_t jsonLen, CjCsp* csp);
 
 /** return CJ_ERROR_OK on success */
-CjError cjCspJsonPrint(FILE* f, CjCsp* csp);
+CjError cjCspJsonPrint(FILE* f, const CjCsp* csp);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -1541,7 +1559,22 @@ static int cjCspJsonParseNoGoods(const char* json, jsmntok_t* t, CjConstraintDef
   return stat;
 }
 
-static int cjCspJsonParseConstraintsDef(const char* json, jsmntok_t* t, CjCsp* csp) {
+static int cjCspJsonParseConstraintsDef(const char* json, jsmntok_t* t, CjConstraintDef* constraintDef) {
+  logTok("noGoods:", json, t);
+  if (!json || !t || !constraintDef) { return CJ_ERROR_ARG; }
+  if (t->type != JSMN_OBJECT) { return CJ_ERROR_CONSTRAINTDEF_IS_NOT_OBJECT; }
+
+  if (jsonEq(json, t + 1, "noGoods")) {
+    int stat = cjCspJsonParseNoGoods(json, t + 2, constraintDef);
+    if (stat < 0) { return stat; }
+    return 2 + stat;
+  }
+  else {
+    return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
+  }
+}
+
+static int cjCspJsonParseConstraintsDefs(const char* json, jsmntok_t* t, CjCsp* csp) {
   logTok("constraintDefs:", json, t);
   if (!json || !t || !csp) { return CJ_ERROR_ARG; }
   if (t->type != JSMN_ARRAY) { return CJ_ERROR_CONSTRAINTDEFS_IS_NOT_ARRAY; }
@@ -1549,25 +1582,19 @@ static int cjCspJsonParseConstraintsDef(const char* json, jsmntok_t* t, CjCsp* c
   if (t->size > 0) {
     csp->constraintDefs = cjConstraintDefArray(t->size);
     if (!csp->constraintDefs) { return CJ_ERROR_NOMEM; }
-    csp->constraintDefsSize = t->size;
   }
   csp->constraintDefsSize = t->size;
 
   int consumed = 1;
   for (int iChild = 0; iChild < t->size; ++iChild) {
     logTok("constraintDefs-child:", json, &t[consumed]);
-    if (jsonEq(json, t + consumed + 1, "noGoods")) {
-      int stat = cjCspJsonParseNoGoods(json, t + consumed + 2, &csp->constraintDefs[iChild]);
-      if (stat < 0) {
-        cjConstraintDefArrayFree(&csp->constraintDefs, csp->constraintDefsSize);
-        csp->constraintDefsSize = 0;
-        return stat;
-      }
-      consumed += 2 + stat;
+    int stat = cjCspJsonParseConstraintsDef(json, t + consumed, &csp->constraintDefs[iChild]);
+    if (stat < 0) {
+      cjConstraintDefArrayFree(&csp->constraintDefs, csp->constraintDefsSize);
+      csp->constraintDefsSize = 0;
+      return stat;
     }
-    else {
-      return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
-    }
+    consumed += stat;
   }
 
   return consumed;
@@ -1658,7 +1685,7 @@ static int cjCspJsonParseTop(const char* json, jsmntok_t* t, CjCsp* csp) {
       consumed += 1 + stat;
     }
     else if (jsonEq(json, t + consumed, "constraintDefs")) {
-      int stat = cjCspJsonParseConstraintsDef(json, t + consumed + 1, csp);
+      int stat = cjCspJsonParseConstraintsDefs(json, t + consumed + 1, csp);
       if (stat < 0) { return stat; }
       consumed += 1 + stat;
     }
@@ -1717,7 +1744,7 @@ static CjError jsmnTokenize(const char* json, const size_t jsonLen, jsmntok_t** 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Public parsing functions
+// CjIntTuples IO
 //
 
 CjError cjIntTuplesParse(
@@ -1741,7 +1768,7 @@ CjError cjIntTuplesParse(
   else                          { return CJ_ERROR_OK; }
 }
 
-CjError cjIntTuplesJsonPrint(FILE* f, CjIntTuples* ts) {
+CjError cjIntTuplesJsonPrint(FILE* f, const CjIntTuples* ts) {
   if (!f || !ts) { return CJ_ERROR_ARG; }
   if (ts->size < 0 || ts->arity < -1) { return CJ_ERROR_ARG; }
   fprintf(f, "[");
@@ -1759,10 +1786,48 @@ CjError cjIntTuplesJsonPrint(FILE* f, CjIntTuples* ts) {
   return CJ_ERROR_OK;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// CjConstraintDef IO
+//
+
+CjError cjConstraintDefParse(
+  const char* json,
+  const size_t jsonLen,
+  CjConstraintDef* cdef)
+{
+  if (!json || !cdef) { return CJ_ERROR_ARG; }
+
+  jsmntok_t* t = NULL;
+  int numTokens = 0;
+  CjError stat = jsmnTokenize(json, jsonLen, &t, &numTokens);
+  if (stat != CJ_ERROR_OK) { return stat; }
+  if (numTokens == 0) { free(t); return CJ_ERROR_ARG; }
+
+  int consumedOrStat = cjCspJsonParseConstraintsDef(json, t, cdef);
+  free(t);
+  if (consumedOrStat < 0)       { return consumedOrStat; }
+  else if (consumedOrStat == 0) { return CJ_ERROR_ARG; }
+  else                          { return CJ_ERROR_OK; }
+}
+
+CjError cjConstraintDefJsonPrint(FILE* f, const CjConstraintDef* cdef) {
+  if (!f || !cdef) { return CJ_ERROR_ARG; }
+
+  if (cdef->type == CJ_CONSTRAINT_DEF_NO_GOODS) {
+    fprintf(f, "    {\"noGoods\": ");
+    CjError err = cjIntTuplesJsonPrint(f, &cdef->noGoods);
+    if (err != CJ_ERROR_OK) { return err; }
+    fprintf(f, "}");
+    return CJ_ERROR_OK;
+  }
+  else {
+    return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
+  }
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Public printing functions
+// CjCsp IO
 //
 
 CjError cjCspJsonParse(const char* json, const size_t jsonLen, CjCsp* csp) {
@@ -1783,9 +1848,10 @@ CjError cjCspJsonParse(const char* json, const size_t jsonLen, CjCsp* csp) {
   else                          { return CJ_ERROR_OK; }
 }
 
-
-CjError cjCspJsonPrint(FILE* f, CjCsp* csp) {
+CjError cjCspJsonPrint(FILE* f, const CjCsp* csp) {
   if (!f || !csp) { return CJ_ERROR_ARG; }
+  CjError err = CJ_ERROR_OK;
+
   fprintf(f, "{\n");
 
   fprintf(f, "  \"meta\": {\n");
@@ -1823,14 +1889,8 @@ CjError cjCspJsonPrint(FILE* f, CjCsp* csp) {
   else {
     fprintf(f, "  \"constraintDefs\": [\n");
     for (int iDef = 0; iDef < csp->constraintDefsSize; ++iDef) {
-      if (csp->constraintDefs[iDef].type == CJ_CONSTRAINT_DEF_NO_GOODS) {
-        fprintf(f, "    {\"noGoods\": ");
-        cjIntTuplesJsonPrint(f, &csp->constraintDefs[iDef].noGoods);
-        fprintf(f, "}");
-      }
-      else {
-        return CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE;
-      }
+      err = cjConstraintDefJsonPrint(f, &csp->constraintDefs[iDef]);
+      if (err != CJ_ERROR_OK) { return err; }
       if (iDef != csp->constraintDefsSize - 1) { fprintf(f, ",\n"); }
       else { fprintf(f, "\n");  }
     }
@@ -1856,5 +1916,4 @@ CjError cjCspJsonPrint(FILE* f, CjCsp* csp) {
 
   return CJ_ERROR_OK;
 }
-
 

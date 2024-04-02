@@ -53,53 +53,55 @@ typedef enum CjError {
   CJ_ERROR_VAR_IS_NOT_INT = -19,
   /** csp-json.constraintDefs is not an array. */
   CJ_ERROR_CONSTRAINTDEFS_IS_NOT_ARRAY = -20,
+  /** csp-json.constraintDefs[i] is not an object. */
+  CJ_ERROR_CONSTRAINTDEF_IS_NOT_OBJECT = -21,
   /** csp-json.constraintDefs[i] is an unknown type (eg. noGoods is known). */
-  CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE = -21,
+  CJ_ERROR_CONSTRAINTDEF_UNKNOWN_TYPE = -22,
   /** csp-json.constraintDefs[i].noGoods is not an array. */
-  CJ_ERROR_NOGOODS_IS_NOT_ARRAY = -22,
+  CJ_ERROR_NOGOODS_IS_NOT_ARRAY = -23,
   /** csp-json.constraintDefs[i].noGoods[j] is not a tuple. */
-  CJ_ERROR_NOGOODS_ARRAY_HAS_NOT_A_TUPLE = -23,
+  CJ_ERROR_NOGOODS_ARRAY_HAS_NOT_A_TUPLE = -24,
   /** csp-json.constraintDefs[i].noGoods[j] has different arity than at j-1. */
-  CJ_ERROR_NOGOODS_ARRAY_DIFFERENT_ARITIES = -24,
+  CJ_ERROR_NOGOODS_ARRAY_DIFFERENT_ARITIES = -25,
   /** csp-json.constraintDefs[i].noGoods[j][k] is not an integer. */
-  CJ_ERROR_NOGOODS_ARRAY_VALUE_IS_NOT_INT = -25,
+  CJ_ERROR_NOGOODS_ARRAY_VALUE_IS_NOT_INT = -26,
   /** csp-json.constraints is not an array. */
-  CJ_ERROR_CONSTRAINTS_IS_NOT_ARRAY = -26,
+  CJ_ERROR_CONSTRAINTS_IS_NOT_ARRAY = -27,
   /** csp-json.constraints[i] is not an object. */
-  CJ_ERROR_CONSTRAINT_IS_NOT_OBJECT = -27,
+  CJ_ERROR_CONSTRAINT_IS_NOT_OBJECT = -28,
   /** csp-json.constraints[i].id is not an integer. */
-  CJ_ERROR_CONSTRAINT_ID_IS_NOT_INT = -28,
+  CJ_ERROR_CONSTRAINT_ID_IS_NOT_INT = -29,
   /** csp-json.constraints[i].vars is not an array. */
-  CJ_ERROR_CONSTRAINT_VARS_IS_NOT_ARRAY = -29,
+  CJ_ERROR_CONSTRAINT_VARS_IS_NOT_ARRAY = -30,
   /** csp-json.constraints[i].vars[j] is not an integer. */
-  CJ_ERROR_CONSTRAINT_VAR_IS_NOT_INT = -30,
+  CJ_ERROR_CONSTRAINT_VAR_IS_NOT_INT = -31,
   /** csp-json.constraints[i] has an unknown field (eg. "id" key is known). */
-  CJ_ERROR_CONSTRAINT_UNKNOWN_FIELD = -31,
+  CJ_ERROR_CONSTRAINT_UNKNOWN_FIELD = -32,
   /** csp-json (the top-level object) is not an object. */
-  CJ_ERROR_CSPJSON_IS_NOT_OBJECT = -32,
+  CJ_ERROR_CSPJSON_IS_NOT_OBJECT = -33,
   /** csp-json (the top-level object) is missing or has extra fields. */
-  CJ_ERROR_CSPJSON_BAD_FIELD_COUNT = -33,
+  CJ_ERROR_CSPJSON_BAD_FIELD_COUNT = -34,
   /** csp-json (the top-level object) has an unknown field (eg. "meta" is known) */
-  CJ_ERROR_CSPJSON_UNKNOWN_FIELD = -34,
+  CJ_ERROR_CSPJSON_UNKNOWN_FIELD = -35,
   /** CjIntTuples[i] is not an array nor integer, or is of inconsistent type. */
-  CJ_ERROR_INTTUPLES_ITEM_TYPE = -35,
+  CJ_ERROR_INTTUPLES_ITEM_TYPE = -36,
   /** Expected an array, got something else. */
-  CJ_ERROR_IS_NOT_ARRAY = -36,
+  CJ_ERROR_IS_NOT_ARRAY = -37,
   /** Validation failed because of invalid domains.size. */
-  CJ_ERROR_VALIDATION_DOMAINS_SIZE = -37,
-  CJ_ERROR_VALIDATION_DOMAINS_TYPE = -38,
-  CJ_ERROR_VALIDATION_VARS_ARITY = -39,
-  CJ_ERROR_VALIDATION_VARS_SIZE = -40,
-  CJ_ERROR_VALIDATION_VAR_RANGE = -41,
-  CJ_ERROR_VALIDATION_CONSTRAINTDEFS_SIZE = -42,
-  CJ_ERROR_VALIDATION_CONSTRAINTDEF_TYPE = -43,
-  CJ_ERROR_VALIDATION_CONSTRAINTS_SIZE = -44,
-  CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE = -45,
-  CJ_ERROR_VALIDATION_CONSTRAINT_VARS_ARITY = -46,
-  CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE = -47,
-  CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE = -48,
-  CJ_ERROR_VALIDATION_SOLUTION_ARITY = -49,
-  CJ_ERROR_VALIDATION_SOLUTION_VARS_SIZE_MISMATCH = -50,
+  CJ_ERROR_VALIDATION_DOMAINS_SIZE = -38,
+  CJ_ERROR_VALIDATION_DOMAINS_TYPE = -39,
+  CJ_ERROR_VALIDATION_VARS_ARITY = -40,
+  CJ_ERROR_VALIDATION_VARS_SIZE = -41,
+  CJ_ERROR_VALIDATION_VAR_RANGE = -42,
+  CJ_ERROR_VALIDATION_CONSTRAINTDEFS_SIZE = -43,
+  CJ_ERROR_VALIDATION_CONSTRAINTDEF_TYPE = -44,
+  CJ_ERROR_VALIDATION_CONSTRAINTS_SIZE = -45,
+  CJ_ERROR_VALIDATION_CONSTRAINT_ID_RANGE = -46,
+  CJ_ERROR_VALIDATION_CONSTRAINT_VARS_ARITY = -47,
+  CJ_ERROR_VALIDATION_CONSTRAINT_VARS_SIZE = -48,
+  CJ_ERROR_VALIDATION_CONSTRAINT_VAR_RANGE = -49,
+  CJ_ERROR_VALIDATION_SOLUTION_ARITY = -50,
+  CJ_ERROR_VALIDATION_SOLUTION_VARS_SIZE_MISMATCH = -51,
 } CjError;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -235,7 +237,7 @@ CjConstraintDef cjConstraintDefInit();
  * Return 0 on success.
  * Free the resulting struct with cjConstraintDefFree().
  */
-CjError cjConstraintDefNoGoodAlloc(int arity, int size, CjConstraintDef* out);
+CjError cjConstraintDefNoGoodAlloc(int size, int arity, CjConstraintDef* out);
 void cjConstraintDefFree(CjConstraintDef* inout);
 
 /**
