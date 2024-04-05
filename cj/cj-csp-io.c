@@ -3,6 +3,7 @@
 #include <string.h>
 
 #define JSMN_STRICT
+#define JSMN_PARENT_LINKS
 #include "jsmn.h"
 #include "cj-csp-io.h"
 

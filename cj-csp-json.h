@@ -708,7 +708,7 @@ CjConstraintDef cjConstraintDefInit();
  * Return 0 on success.
  * Free the resulting struct with cjConstraintDefFree().
  */
-CjError cjConstraintDefNoGoodAlloc(int arity, int size, CjConstraintDef* out);
+CjError cjConstraintDefNoGoodAlloc(int size, int arity, CjConstraintDef* out);
 void cjConstraintDefFree(CjConstraintDef* inout);
 
 /**
@@ -1273,6 +1273,7 @@ CjError cjCspJsonPrint(FILE* f, const CjCsp* csp);
 #include <string.h>
 
 #define JSMN_STRICT
+#define JSMN_PARENT_LINKS
 
 //#define CJ_DEBUG
 
@@ -1814,7 +1815,7 @@ CjError cjConstraintDefJsonPrint(FILE* f, const CjConstraintDef* cdef) {
   if (!f || !cdef) { return CJ_ERROR_ARG; }
 
   if (cdef->type == CJ_CONSTRAINT_DEF_NO_GOODS) {
-    fprintf(f, "    {\"noGoods\": ");
+    fprintf(f, "{\"noGoods\": ");
     CjError err = cjIntTuplesJsonPrint(f, &cdef->noGoods);
     if (err != CJ_ERROR_OK) { return err; }
     fprintf(f, "}");
@@ -1889,6 +1890,7 @@ CjError cjCspJsonPrint(FILE* f, const CjCsp* csp) {
   else {
     fprintf(f, "  \"constraintDefs\": [\n");
     for (int iDef = 0; iDef < csp->constraintDefsSize; ++iDef) {
+      fprintf(f, "    ");
       err = cjConstraintDefJsonPrint(f, &csp->constraintDefs[iDef]);
       if (err != CJ_ERROR_OK) { return err; }
       if (iDef != csp->constraintDefsSize - 1) { fprintf(f, ",\n"); }
