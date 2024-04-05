@@ -318,8 +318,14 @@ void cjConstraintDefJsonPrintTestNoGoods() {
 
   CjConstraintDef cdef;
   EXPECT_RETURN(cjConstraintDefNoGoodAlloc(2/*size*/, 3/*arity*/, &cdef), CJ_ERROR_OK);
+  cdef.noGoods.data[0] = 1;
+  cdef.noGoods.data[1] = 2;
+  cdef.noGoods.data[2] = 3;
+  cdef.noGoods.data[3] = 4;
+  cdef.noGoods.data[4] = 5;
+  cdef.noGoods.data[5] = 6;
   EXPECT_RETURN(cjConstraintDefJsonPrint(f, &cdef), CJ_ERROR_OK);
-  EXPECT_STR_EQ(buf, "{\"noGoods\": [[1,2,3], [4, 5, 6]]}");
+  EXPECT_STR_EQ(buf, "{\"noGoods\": [[1, 2, 3], [4, 5, 6]]}");
 
   fclose(f);
   free(buf);
