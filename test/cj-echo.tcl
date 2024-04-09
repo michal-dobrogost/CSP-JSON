@@ -13,5 +13,5 @@ foreach testFile [glob-r [file join $projectPath "data"] *.json] {
   set fp [open $testFile r]
   set expected [read -nonewline $fp]
   close $fp
-  testCmd [list $cjEchoPath --csp $testFile] -exit-eq 0 -out-eq $expected
+  testCmd [list $cjEchoPath --normalize --csp $testFile] -exit-eq 0 -out-eq $expected
 }

@@ -43,5 +43,5 @@ set expected {{
     {"id": 9, "vars": [14, 44]}
   ]
 }}
-testCmd [list $cjGenUrbcspPath 100 10 10 10 100 100] -exit-eq 0 -out-ends-with $expected
-testCmd [list $cjGenUrbcspPath 100 10 10 10 100 100 10] -exit-eq 0 -out-ends-with $expected
+testCmd [list $cjGenUrbcspPath 100 10 10 10 100 99] -exit-eq 0 -out-ends-with $expected
+testCmd [list $cjGenUrbcspPath 100 10 10 10 100 99 10] -exit-eq 0 -out-ends-with $expected
