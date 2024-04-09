@@ -10,10 +10,10 @@
 /* function declarations */
 float ran2(int32_t *idum);
 CjError StartCSP(int N, int D, int K, int C, int T, int32_t S, int Instance, CjCsp* csp);
-CjError EndCSP(CjCsp* csp);
+CjError EndCSP(CjCsp* csp, bool print);
 CjError AddConstraint(int var1, int var2, CjConstraint* constraint);
 CjError AddNogood(int tupleIdx, int val1, int val2, CjConstraintDef* constraintDef);
-int MakeURBCSP(int N, int D, int K, int C, int T, int32_t S, int32_t *Seed);
+int MakeURBCSP(int N, int D, int K, int C, int T, int32_t S, int32_t *Seed, bool print);
 
 /*********************************************************************
   This file has 5 parts:
@@ -68,8 +68,8 @@ int main(int argc, char* argv[])
     Seed = -Seed;
   }
 
-  for (i=0; i<I; ++i) {
-    if (!MakeURBCSP(N, D, K, C, T, S, &Seed)) {
+  for (i=0; i<=I; ++i) {
+    if (!MakeURBCSP(N, D, K, C, T, S, &Seed, i == I)) {
       return 2;
     }
   }
@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
       Returns 0 if there is a problem; 1 for normal completion.
 *********************************************************************/
 
-int MakeURBCSP(int N, int D, int K, int C, int T, int32_t S, int32_t *Seed)
+int MakeURBCSP(int N, int D, int K, int C, int T, int32_t S, int32_t *Seed, bool print)
 {
   int PossibleCTs, PossibleNGs;       /* CT means "constraint" */
   uint32_t *CTarray, *NGarray;   /* NG means "nogood pair" */
@@ -229,7 +229,7 @@ int MakeURBCSP(int N, int D, int K, int C, int T, int32_t S, int32_t *Seed)
   free(CTarray);
   free(NGarray);
 
-  err = EndCSP(&csp);
+  err = EndCSP(&csp, print);
   if (err != CJ_ERROR_OK) { return 0; }
 
   return 1;
@@ -408,11 +408,14 @@ CjError AddNogood(int tupleIdx, int val1, int val2, CjConstraintDef* constraintD
   return CJ_ERROR_OK;
 }
 
-CjError EndCSP(CjCsp* csp)
+CjError EndCSP(CjCsp* csp, bool print)
 {
   if (!csp) { return CJ_ERROR_ARG; }
   int err = cjCspNormalize(csp);
   if (err != CJ_ERROR_OK) { return err; }
-  return cjCspJsonPrint(stdout, csp);
+  if (print) {
+    return cjCspJsonPrint(stdout, csp);
+  }
+  return CJ_ERROR_OK;
 }
 
