@@ -15,11 +15,6 @@ BIN_PREFIX=~/exe
 #BUILD_TYPE='Debug'
 BUILD_TYPE='Release'
 
-if ! command -v tclsh; then
-  >&2 echo "WARNING: tclsh not detected in your environment. Tools will not be tested."
-  read -p "Press enter to continue..."
-fi
-
 cmake -S . -B build -D CMAKE_BUILD_TYPE="${BUILD_TYPE}"
 cmake --build build --config "${BUILD_TYPE}" --verbose
 cmake --install build --config Release --verbose --prefix ${BIN_PREFIX}

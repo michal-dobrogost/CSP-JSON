@@ -1,14 +1,21 @@
-#!/usr/bin/env tclsh
+import pytest
+import shlex
+import subprocess
 
-source [file join [file dirname [info script]] "test.tcl"]
+from difflib import Differ
+from glob import glob
+from pathlib import Path
 
-if {$argc != 1} {
-  puts "ERROR: incorrect number of arguments"
-  exit 1
-}
-set cjGenUrbcspPath [lindex $argv 0]
+base = Path(__file__).parent.parent.absolute()
 
-set expected {{
+@pytest.fixture(scope="session")
+def exe(pytestconfig):
+    return pytestconfig.getoption("exe")
+
+def run_cj_gen_urbcsp(exe, args):
+    return subprocess.run(shlex.split(str(exe)) + args, capture_output=True)
+
+expected = '''{
   "meta": {
     "id": "urbcsp/n100d10c10t10s100i99k10",
     "algo": "urbcsp",
@@ -42,6 +49,15 @@ set expected {{
     {"id": 8, "vars": [11, 59]},
     {"id": 9, "vars": [14, 44]}
   ]
-}}
-testCmd [list $cjGenUrbcspPath 100 10 10 10 100 99] -exit-eq 0 -out-ends-with $expected
-testCmd [list $cjGenUrbcspPath 100 10 10 10 100 99 10] -exit-eq 0 -out-ends-with $expected
+}
+'''
+
+def test_urbcsp(exe):
+    r = run_cj_gen_urbcsp(exe, '100 10 10 10 100 99'.split(' '))
+    assert r.returncode == 0
+    assert r.stdout.decode('utf-8') == expected
+
+def test_urbcsp_num_constraint_defs(exe):
+    r = run_cj_gen_urbcsp(exe, '100 10 10 10 100 99 10'.split(' '))
+    assert r.returncode == 0
+    assert r.stdout.decode('utf-8') == expected
